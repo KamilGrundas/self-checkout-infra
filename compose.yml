@@ -42,6 +42,16 @@ services:
       - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.tls.certresolver=le
       - traefik.http.services.${STACK_NAME?Variable not set}-adminer.loadbalancer.server.port=8080
 
+  minio:
+    image: minio/minio:latest
+    restart: always
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY?Variable not set}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY?Variable not set}
+
   prestart:
     image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
     build:
@@ -75,6 +85,12 @@ services:
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - SENTRY_DSN=${SENTRY_DSN}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT?Variable not set}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY?Variable not set}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY?Variable not set}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME?Variable not set}
+      - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL?Variable not set}
+      - MINIO_USE_SSL=${MINIO_USE_SSL?Variable not set}
 
   backend:
     image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
@@ -108,6 +124,12 @@ services:
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - SENTRY_DSN=${SENTRY_DSN}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT?Variable not set}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY?Variable not set}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY?Variable not set}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME?Variable not set}
+      - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL?Variable not set}
+      - MINIO_USE_SSL=${MINIO_USE_SSL?Variable not set}
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
@@ -136,9 +158,10 @@ services:
       # Enable redirection for HTTP and HTTPS
       - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.middlewares=https-redirect
 
-  
+
 volumes:
   app-db-data:
+  minio-data:
 
 networks:
   traefik-public:

@@ -55,6 +55,12 @@ services:
     ports:
       - "8080:8080"
 
+  minio:
+    restart: "no"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
   backend:
     restart: "no"
     ports:
