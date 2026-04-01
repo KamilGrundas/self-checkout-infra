@@ -93,6 +93,24 @@ services:
       SMTP_TLS: "false"
       EMAILS_FROM_EMAIL: "noreply@example.com"
 
+  ml:
+    restart: "no"
+    ports:
+      - "8001:8000"
+    build:
+      context: ../self-checkout-ml
+      dockerfile: Dockerfile
+    command:
+      - fastapi
+      - run
+      - --reload
+      - "app/main.py"
+    develop:
+      watch:
+        - path: ../self-checkout-ml
+          action: sync
+          target: /app
+
   mailcatcher:
     image: schickling/mailcatcher
     ports:

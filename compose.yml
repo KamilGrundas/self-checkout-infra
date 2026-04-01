@@ -158,6 +158,48 @@ services:
       # Enable redirection for HTTP and HTTPS
       - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.middlewares=https-redirect
 
+  ml:
+    image: '${DOCKER_IMAGE_ML?Variable not set}:${TAG-latest}'
+    restart: always
+    networks:
+      - traefik-public
+      - default
+    depends_on:
+      - minio
+    env_file:
+      - .env
+    environment:
+      - PROJECT_NAME=Self-Checkout ML
+      - FRONTEND_HOST=${FRONTEND_HOST?Variable not set}
+      - ENVIRONMENT=${ENVIRONMENT}
+      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT?Variable not set}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY?Variable not set}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY?Variable not set}
+      - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL?Variable not set}
+      - MINIO_USE_SSL=${MINIO_USE_SSL?Variable not set}
+      - ML_MINIO_BUCKET_NAME=${ML_MINIO_BUCKET_NAME?Variable not set}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    build:
+      context: ../self-checkout-ml
+      dockerfile: Dockerfile
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+      - traefik.http.services.${STACK_NAME?Variable not set}-ml.loadbalancer.server.port=8000
+      - traefik.http.routers.${STACK_NAME?Variable not set}-ml-http.rule=Host(`ml-api.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-ml-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME?Variable not set}-ml-http.middlewares=https-redirect
+      - traefik.http.routers.${STACK_NAME?Variable not set}-ml-https.rule=Host(`ml-api.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-ml-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME?Variable not set}-ml-https.tls=true
+      - traefik.http.routers.${STACK_NAME?Variable not set}-ml-https.tls.certresolver=le
+
 
 volumes:
   app-db-data:
