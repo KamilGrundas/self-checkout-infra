@@ -52,6 +52,46 @@ services:
       - MINIO_ROOT_USER=${MINIO_ACCESS_KEY?Variable not set}
       - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY?Variable not set}
 
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.10.1-full
+    restart: always
+    networks:
+      - traefik-public
+      - default
+    volumes:
+      - mlflow-data:/mlflow
+    environment:
+      - MLFLOW_SERVER_ALLOWED_HOSTS=${MLFLOW_SERVER_ALLOWED_HOSTS?Variable not set}
+    command:
+      - mlflow
+      - server
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5000"
+      - --backend-store-uri
+      - sqlite:////mlflow/mlflow.db
+      - --artifacts-destination
+      - /mlflow/artifacts
+      - --serve-artifacts
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+      - traefik.http.services.${STACK_NAME?Variable not set}-mlflow.loadbalancer.server.port=5000
+      - traefik.http.routers.${STACK_NAME?Variable not set}-mlflow-http.rule=Host(`mlflow.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-mlflow-http.entrypoints=http
+      - traefik.http.routers.${STACK_NAME?Variable not set}-mlflow-http.middlewares=https-redirect
+      - traefik.http.routers.${STACK_NAME?Variable not set}-mlflow-https.rule=Host(`mlflow.${DOMAIN?Variable not set}`)
+      - traefik.http.routers.${STACK_NAME?Variable not set}-mlflow-https.entrypoints=https
+      - traefik.http.routers.${STACK_NAME?Variable not set}-mlflow-https.tls=true
+      - traefik.http.routers.${STACK_NAME?Variable not set}-mlflow-https.tls.certresolver=le
+
   prestart:
     image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
     build:
@@ -166,6 +206,7 @@ services:
       - default
     depends_on:
       - minio
+      - mlflow
     env_file:
       - .env
     environment:
@@ -179,6 +220,7 @@ services:
       - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL?Variable not set}
       - MINIO_USE_SSL=${MINIO_USE_SSL?Variable not set}
       - ML_MINIO_BUCKET_NAME=${ML_MINIO_BUCKET_NAME?Variable not set}
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI?Variable not set}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
       interval: 10s
@@ -204,6 +246,7 @@ services:
 volumes:
   app-db-data:
   minio-data:
+  mlflow-data:
 
 networks:
   traefik-public:

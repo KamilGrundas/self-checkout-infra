@@ -61,6 +61,11 @@ services:
       - "9000:9000"
       - "9001:9001"
 
+  mlflow:
+    restart: "no"
+    ports:
+      - "5002:5000"
+
   backend:
     restart: "no"
     ports:
