@@ -1,0 +1,57 @@
+services:
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.10.1-full
+    restart: "no"
+    ports:
+      - "5002:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    environment:
+      - MLFLOW_SERVER_ALLOWED_HOSTS=${MLFLOW_SERVER_ALLOWED_HOSTS?Variable not set}
+    command:
+      - mlflow
+      - server
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5000"
+      - --backend-store-uri
+      - sqlite:////mlflow/mlflow.db
+      - --artifacts-destination
+      - /mlflow/artifacts
+      - --serve-artifacts
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  label-studio:
+    image: heartexlabs/label-studio:latest
+    restart: "no"
+    ports:
+      - "8080:8080"
+    volumes:
+      - label-studio-data:/label-studio/data
+    env_file:
+      - .env
+    environment:
+      - LABEL_STUDIO_USERNAME=${LABEL_STUDIO_USERNAME?Variable not set}
+      - LABEL_STUDIO_PASSWORD=${LABEL_STUDIO_PASSWORD?Variable not set}
+      - LABEL_STUDIO_API_KEY=${LABEL_STUDIO_API_KEY?Variable not set}
+      - S3_TRUSTED_STORAGE_DOMAINS=
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/version', timeout=5)"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mlflow-data:
+  label-studio-data:
