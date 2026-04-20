@@ -68,7 +68,6 @@ LABEL_STUDIO_URL=http://label-studio:8080
 LABEL_STUDIO_USERNAME=admin@example.com
 LABEL_STUDIO_PASSWORD=changethis
 LABEL_STUDIO_API_KEY=changethis-api-key
-LABEL_STUDIO_LABELS=Ananas,Banan,Jabłko,Kiwi
 LABEL_STUDIO_SCALE_PROJECT_TITLE=scale-products
 LABEL_STUDIO_SHELF_PROJECT_TITLE=shelf-products
 LABEL_STUDIO_EXTERNAL_PROJECT_TITLE=external-products
