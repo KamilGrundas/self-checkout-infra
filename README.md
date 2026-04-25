@@ -4,6 +4,7 @@ Minimal Docker Compose setup for local development.
 
 Related parts of the project:
 - Backend: `https://github.com/KamilGrundas/self-checkout-backend`
+- Admin panel: `../self-checkout-admin`
 - Client: `https://github.com/KamilGrundas/self-checkout-client`
 - ML service: `https://github.com/KamilGrundas/self-checkout-ml`
 
@@ -14,6 +15,7 @@ Default stack:
 - MinIO
 - MinIO bucket bootstrap
 - backend
+- admin panel
 - ml
 
 Optional `ml-dev` stack:
@@ -24,6 +26,7 @@ Optional `ml-dev` stack:
 
 ```env
 FRONTEND_HOST=http://localhost:5173
+VITE_API_URL=http://localhost:8000
 ENVIRONMENT=local
 BACKEND_CORS_ORIGINS=http://localhost,http://localhost:5173,https://localhost,https://localhost:5173
 
@@ -73,6 +76,7 @@ LABEL_STUDIO_SHELF_PROJECT_TITLE=shelf-products
 LABEL_STUDIO_EXTERNAL_PROJECT_TITLE=external-products
 
 DOCKER_IMAGE_BACKEND=backend
+DOCKER_IMAGE_ADMIN=admin
 DOCKER_IMAGE_ML=ml
 TAG=latest
 ```
@@ -97,6 +101,7 @@ Default stack:
 ## Local Endpoints
 
 - backend: `http://127.0.0.1:8000`
+- admin panel: `http://127.0.0.1:5173`
 - ml api: `http://127.0.0.1:8001`
 - postgres: `127.0.0.1:5432`
 - minio api: `http://127.0.0.1:9000`

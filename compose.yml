@@ -136,6 +136,19 @@ services:
       context: ../self-checkout-backend
       dockerfile: Dockerfile
 
+  admin:
+    image: ${DOCKER_IMAGE_ADMIN?Variable not set}:${TAG-latest}
+    restart: always
+    depends_on:
+      backend:
+        condition: service_healthy
+        restart: true
+    build:
+      context: ../self-checkout-admin
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL?Variable not set}
+
   ml:
     image: ${DOCKER_IMAGE_ML?Variable not set}:${TAG-latest}
     restart: always

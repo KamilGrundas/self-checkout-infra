@@ -35,6 +35,16 @@ services:
     volumes:
       - ../self-checkout-backend/htmlcov:/app/backend/htmlcov
 
+  admin:
+    restart: "no"
+    ports:
+      - "5173:80"
+    build:
+      context: ../self-checkout-admin
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL?Variable not set}
+
   ml:
     restart: "no"
     ports:
