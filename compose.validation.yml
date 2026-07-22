@@ -89,7 +89,7 @@ services:
       - client-validation-target:/workspace/target
 
   integration-validation:
-    image: curlimages/curl:8.15.0
+    image: curlimages/curl:8.21.0
     depends_on:
       backend:
         condition: service_healthy

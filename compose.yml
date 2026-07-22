@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:18
+    image: postgres:18.4
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
@@ -19,7 +19,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB?Variable not set}
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     restart: always
     command: server /data --console-address ":9001"
     volumes:
@@ -29,7 +29,7 @@ services:
       - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY?Variable not set}
 
   minio-init:
-    image: minio/mc:latest
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
     restart: "no"
     depends_on:
       - minio
