@@ -7,3 +7,8 @@ node_modules/
 /playwright/.cache/
 .env
 mydata/
+.cache/
+*.pem
+*.key
+*.p12
+*.pfx
