@@ -184,7 +184,13 @@ services:
       - LABEL_STUDIO_SHELF_PROJECT_TITLE=${LABEL_STUDIO_SHELF_PROJECT_TITLE:-shelf-products}
       - LABEL_STUDIO_EXTERNAL_PROJECT_TITLE=${LABEL_STUDIO_EXTERNAL_PROJECT_TITLE:-external-products}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/utils/health-check/', timeout=5)"
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
