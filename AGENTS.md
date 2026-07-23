@@ -8,6 +8,6 @@ All Docker/Compose validation runs through `ssh dev`; never invoke Docker locall
 
 Keep commits focused and imperative. Production scripts must verify `/etc/codex-environment`, accept only whitelisted arguments, avoid `eval`, and never accept local source synchronization.
 
-The temporary base branch is `dev` as recorded in `../repos.yaml`; the target base after migration is `main`. Never implement directly on `dev`, `main`, or `master`. Use Conventional Commits with scopes such as `infra`, `compose`, `dev`, `ci`, `deploy`, or `rollback`.
+The base branch is `main` as recorded in `../repos.yaml`. Create short-lived branches from a freshly fetched `origin/main`, and never implement directly on `main` or `master`. Use Conventional Commits with scopes such as `infra`, `compose`, `dev`, `ci`, `deploy`, or `rollback`.
 
 Definition of Done: YAML and shell syntax checks pass, Compose resolves the real sibling build contexts, required services become healthy on remote dev, integration validation passes, no `.env` or secret is committed, and every volume/migration/deploy change includes compatibility and rollback notes. Production-affecting work still requires separate approval.
