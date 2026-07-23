@@ -78,7 +78,7 @@ LABEL_STUDIO_EXTERNAL_PROJECT_TITLE=external-products
 DOCKER_IMAGE_BACKEND=backend
 DOCKER_IMAGE_ADMIN=admin
 DOCKER_IMAGE_ML=ml
-TAG=latest
+TAG=dev
 ```
 
 ## Run
@@ -97,6 +97,35 @@ Default stack:
 
 `./scripts/up.sh` starts the default stack and then stops the optional
 `ml-dev` services if they are already running.
+
+## Container version policy
+
+External images use an explicit patch or release tag plus an immutable
+multi-architecture manifest digest. Application images require an explicit
+`TAG`; `dev` is only the local build tag. Production must continue to use an
+approved immutable release tag or digest through the controlled deployment
+procedure.
+
+PostgreSQL major upgrades are intentionally excluded from routine image
+refreshes because they require a separate data migration and rollback plan.
+
+The MinIO Community Edition repository and official image distribution are no
+longer maintained. The official image is pinned to its final published image;
+do not replace it with a third-party rebuild. Plan a separate object-storage
+migration:
+
+1. compare actively maintained S3-compatible candidates (SeaweedFS, Garage,
+   Ceph RGW, or a managed S3 service) against the exact API calls used by the
+   backend, ML service, and Label Studio;
+2. validate bucket creation, path-style addressing, multipart uploads, object
+   metadata, presigned/public URLs, and Label Studio storage integration;
+3. create and checksum a full export of every configured bucket;
+4. dual-write or freeze writes, copy data, compare object counts and hashes,
+   then switch endpoints;
+5. retain the MinIO volume read-only until the rollback window closes.
+
+Re-evaluate immediately when a security issue affects the pinned MinIO release.
+Do not perform this data migration as an image-only update.
 
 ## Local Endpoints
 

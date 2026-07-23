@@ -1,6 +1,6 @@
 services:
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v3.14.0-full
+    image: ghcr.io/mlflow/mlflow:v3.14.0-full@sha256:73365f742d67ef9e59e50118010bf14ff825a157c8244051baea887b8587e772
     restart: "no"
     ports:
       - "5002:5000"
@@ -33,7 +33,7 @@ services:
       retries: 5
 
   label-studio:
-    image: heartexlabs/label-studio:1.23.0
+    image: heartexlabs/label-studio:1.23.0@sha256:aa461572e8f9d86a1bf9520c1db620204e86160fd2f80dd7e9d40ac84a8828ea
     restart: "no"
     ports:
       - "8080:8080"
