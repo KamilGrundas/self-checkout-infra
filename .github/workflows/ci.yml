@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  configuration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Shell syntax
+        run: bash -n scripts/*.sh
+      - name: YAML syntax
+        run: |
+          ruby -e 'require "yaml"; Dir["*.yml", "*.yaml"].each { |file| YAML.load_file(file); puts "#{file}: OK" }'
+      - name: Compose configuration
+        run: |
+          cp .env.example .env
+          docker compose -f compose.yml -f compose.override.yml config --quiet
+          docker compose -f compose.yml -f compose.override.yml -f compose.validation.yml config --quiet
+
+  integration-required:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Sibling build-context and health validation must be recorded from ops/dev-test.sh --repo infra before merge."

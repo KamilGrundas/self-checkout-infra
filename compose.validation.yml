@@ -1,0 +1,111 @@
+services:
+  backend:
+    environment:
+      SMTP_HOST: mailcatcher
+      SMTP_PORT: "1025"
+      SMTP_TLS: "false"
+      SMTP_SSL: "false"
+    depends_on:
+      mailcatcher:
+        condition: service_started
+
+  mailcatcher:
+    image: sj26/mailcatcher:v0.10.0
+    restart: "no"
+
+  backend-validation:
+    build:
+      context: ../self-checkout-backend
+      dockerfile: Dockerfile
+    working_dir: /workspace
+    volumes:
+      - ../self-checkout-backend:/workspace
+      - backend-validation-venv:/workspace/.venv
+    env_file:
+      - .env
+    environment:
+      POSTGRES_SERVER: db
+      MINIO_ENDPOINT: minio:9000
+    depends_on:
+      db:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    command:
+      - bash
+      - -lc
+      - uv sync --frozen --group dev && export PATH=/workspace/.venv/bin:$$PATH && bash scripts/lint.sh && bash scripts/tests-start.sh
+
+  admin-validation:
+    build:
+      context: ../self-checkout-admin
+      dockerfile: Dockerfile.validation
+    working_dir: /workspace
+    volumes:
+      - ../self-checkout-admin:/workspace
+      - admin-validation-node-modules:/workspace/node_modules
+      - admin-validation-auth:/workspace/playwright/.auth
+      - admin-validation-results:/workspace/test-results
+      - admin-validation-report:/workspace/playwright-report
+      - admin-validation-blob-report:/workspace/blob-report
+    env_file:
+      - .env
+    environment:
+      CI: "true"
+      VITE_API_URL: http://backend:8000
+      MAILCATCHER_HOST: http://mailcatcher:1080
+    depends_on:
+      backend:
+        condition: service_healthy
+      mailcatcher:
+        condition: service_started
+    command:
+      - bash
+      - -lc
+      - npm ci && npx biome check --no-errors-on-unmatched --files-ignore-unknown=true src tests biome.json vite.config.ts playwright.config.ts openapi-ts.config.ts && npm run build && npm test
+
+  ml-validation:
+    build:
+      context: ../self-checkout-ml
+      dockerfile: Dockerfile
+    working_dir: /workspace
+    volumes:
+      - ../self-checkout-ml:/workspace
+      - ml-validation-venv:/workspace/.venv
+    env_file:
+      - .env
+    command:
+      - bash
+      - -lc
+      - uv sync --group dev && uv run ruff check app && uv run ruff format app --check
+
+  client-validation:
+    build:
+      context: ../self-checkout-client
+      dockerfile: Dockerfile.validation
+    working_dir: /workspace
+    volumes:
+      - ../self-checkout-client:/workspace
+      - client-validation-target:/workspace/target
+
+  integration-validation:
+    image: curlimages/curl:8.21.0
+    depends_on:
+      backend:
+        condition: service_healthy
+      ml:
+        condition: service_healthy
+    command:
+      - sh
+      - -ec
+      - curl -fsS http://backend:8000/api/v1/utils/health-check/ && curl -fsS http://ml:8000/api/v1/utils/health-check/ && curl -fsS http://admin/
+
+volumes:
+  backend-validation-venv:
+  admin-validation-node-modules:
+  admin-validation-auth:
+  admin-validation-results:
+  admin-validation-report:
+  admin-validation-blob-report:
+  ml-validation-venv:
+  client-validation-target:

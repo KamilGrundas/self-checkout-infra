@@ -1,0 +1,64 @@
+services:
+  db:
+    restart: "no"
+    ports:
+      - "5432:5432"
+
+  minio:
+    restart: "no"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  backend:
+    restart: "no"
+    ports:
+      - "8000:8000"
+    build:
+      context: ../self-checkout-backend
+      dockerfile: Dockerfile
+    command:
+      - fastapi
+      - run
+      - --reload
+      - app/main.py
+    develop:
+      watch:
+        - path: ../self-checkout-backend
+          action: sync
+          target: /app/backend
+          ignore:
+            - ../self-checkout-backend/.venv
+            - .venv
+        - path: ../self-checkout-backend/pyproject.toml
+          action: rebuild
+    volumes:
+      - ../self-checkout-backend/htmlcov:/app/backend/htmlcov
+
+  admin:
+    restart: "no"
+    ports:
+      - "5173:80"
+    build:
+      context: ../self-checkout-admin
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL?Variable not set}
+
+  ml:
+    restart: "no"
+    ports:
+      - "8001:8000"
+    build:
+      context: ../self-checkout-ml
+      dockerfile: Dockerfile
+    command:
+      - fastapi
+      - run
+      - --reload
+      - app/main.py
+    develop:
+      watch:
+        - path: ../self-checkout-ml
+          action: sync
+          target: /app
