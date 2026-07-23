@@ -10,7 +10,7 @@ services:
         condition: service_started
 
   mailcatcher:
-    image: sj26/mailcatcher:v0.10.0
+    image: sj26/mailcatcher:v0.10.0@sha256:5d153a4daadf0c266f29c3856085741f06ca1e3768671f4267622d3e3ffe5564
     restart: "no"
 
   backend-validation:
@@ -89,7 +89,7 @@ services:
       - client-validation-target:/workspace/target
 
   integration-validation:
-    image: curlimages/curl:8.21.0
+    image: curlimages/curl:8.21.0@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
     depends_on:
       backend:
         condition: service_healthy
