@@ -8,7 +8,7 @@ cd "$ROOT_DIR"
 service="${1:-}"
 tail_lines="${2:-200}"
 case "$service" in
-  admin|backend|db|minio|minio-init|ml|prestart) ;;
+  admin|backend|db|ml|prestart|s3-contract-test) ;;
   *) printf 'ERROR: unsupported service: %s\n' "$service" >&2; exit 2 ;;
 esac
 case "$tail_lines" in

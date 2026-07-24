@@ -1,0 +1,27 @@
+services:
+  prestart:
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: ${DATABASE_URL?Production DATABASE_URL is required}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL?Production S3 endpoint is required}
+      S3_BUCKET: ${S3_BUCKET?Production S3 bucket is required}
+      S3_CREATE_BUCKETS: "false"
+
+  backend:
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: ${DATABASE_URL?Production DATABASE_URL is required}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL?Production S3 endpoint is required}
+      S3_BUCKET: ${S3_BUCKET?Production S3 bucket is required}
+      S3_CREATE_BUCKETS: "false"
+
+  ml:
+    environment:
+      ENVIRONMENT: production
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL?Production S3 endpoint is required}
+      S3_SHELF_BUCKET: ${S3_SHELF_BUCKET?Production shelf bucket is required}
+      S3_SCALE_BUCKET: ${S3_SCALE_BUCKET?Production scale bucket is required}
+      S3_EXTERNAL_BUCKET: ${S3_EXTERNAL_BUCKET?Production upload bucket is required}
+      S3_TRAINING_BUCKET: ${S3_TRAINING_BUCKET?Production training bucket is required}
+      S3_LABEL_STUDIO_EXPORT_BUCKET: ${S3_LABEL_STUDIO_EXPORT_BUCKET?Production export bucket is required}
+      S3_CREATE_BUCKETS: "false"

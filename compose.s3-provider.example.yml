@@ -1,0 +1,17 @@
+# Contract-only example. Copy this file to an untracked overlay and adapt the
+# command, healthcheck, and data path for a chosen S3-compatible implementation.
+# The application contract is the DNS alias `s3-provider` plus the configured
+# S3 endpoint port. No provider or image is selected by this repository.
+services:
+  s3-provider:
+    image: ${S3_DEV_IMAGE?Choose an S3-compatible provider}:${S3_DEV_IMAGE_TAG?Pin an exact provider version}
+    restart: "no"
+    networks:
+      default:
+        aliases:
+          - s3-provider
+    ports:
+      - "${S3_DEV_HOST_PORT:-8082}:${S3_DEV_CONTAINER_PORT:-8080}"
+    environment:
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID?Variable not set}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY?Variable not set}
