@@ -32,8 +32,11 @@ services:
       db:
         condition: service_healthy
         restart: true
+      mailcatcher:
+        condition: service_started
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?connect_timeout=${DB_CONNECT_TIMEOUT:-10}
+      SMTP_HOST: mailcatcher
     ports:
       - "8000:8000"
     command:
@@ -73,6 +76,12 @@ services:
         - path: ../self-checkout-ml
           action: sync
           target: /app
+
+  mailcatcher:
+    image: sj26/mailcatcher:v0.10.0@sha256:5d153a4daadf0c266f29c3856085741f06ca1e3768671f4267622d3e3ffe5564
+    restart: "no"
+    ports:
+      - "1080:1080"
 
 volumes:
   app-db-data:

@@ -1,6 +1,6 @@
 # Infrastructure repository instructions
 
-This repository is the source of truth for Docker Compose topology, service names, build contexts, infrastructure health checks, production configuration, deployment, and rollback. `compose.yml` is the application-only base, `compose.override.yml` adds dev PostgreSQL and development behavior, `compose.prod.yml` enforces external production dependencies, and `compose.mlflow.yml` adds optional dev MLflow and Label Studio services.
+This repository is the source of truth for Docker Compose topology, service names, build contexts, infrastructure health checks, production configuration, deployment, and rollback. `compose.yml` is the application-only base, `compose.override.yml` adds dev PostgreSQL and development behavior, `compose.prod.yml` enforces external production dependencies, and `compose.mlflow.yml` adds MLflow and Label Studio to the standard full dev stack.
 
 Read `../AGENTS.md` first. Inspect Git with `git -C self-checkout-infra`; never edit directly on `main` or `master`, combine repositories in one commit, or commit `.env`, `mydata`, database/object-store contents, credentials, private keys, tokens, or generated test reports. Do not rename Compose files or services without coordinating every consumer. Treat changes to volumes, ports, health checks, migrations, and production commands as high risk.
 

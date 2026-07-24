@@ -10,7 +10,8 @@ workflows.
 - `compose.override.yml`: dev PostgreSQL, ports, reload, and local volumes.
 - `compose.prod.yml`: required external PostgreSQL and S3 configuration; no
   stateful services.
-- `compose.mlflow.yml`: optional dev MLflow and Label Studio.
+- `compose.mlflow.yml`: dev MLflow and Label Studio, included by the standard
+  dev startup scripts.
 - `compose.s3-provider.example.yml`: provider-neutral overlay contract with an
   image/version placeholder.
 - `compose.s3-contract-test.yml`: isolated automated-test fixture only.
@@ -44,6 +45,8 @@ MLflow separates `MLFLOW_TRACKING_URI`, `MLFLOW_BACKEND_STORE_URI`, and
 `MLFLOW_ARTIFACT_ROOT`. Its artifact root may be an S3 URI and receives the same
 generic endpoint and credential configuration. The ML API remains healthy
 without MLflow, but training, registry, and model-loading workflows require it.
+Standard dev startup brings up backend, admin, ML API, PostgreSQL, MLflow,
+Label Studio, and the development mail catcher together.
 
 ## Development validation
 
@@ -51,10 +54,10 @@ Docker commands run only on the marked `dev` host through workspace scripts:
 
 ```bash
 ../ops/dev-test.sh
-../ops/dev-test.sh --ml-dev
 ```
 
-Validation attaches the isolated S3 contract fixture and tests bucket
+Validation starts the full dev stack, attaches the isolated S3 contract fixture,
+and tests bucket
 availability/creation, custom endpoint, path-style addressing, write, read,
 list, metadata, content type, and delete. The fixture is not started by
 `scripts/up.sh` and is never included in production.

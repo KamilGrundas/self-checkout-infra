@@ -1,6 +1,9 @@
 services:
   backend:
     environment:
+      FRONTEND_HOST: http://localhost:5173
+      BACKEND_PUBLIC_URL: http://backend:8000
+      BACKEND_CORS_ORIGINS: http://localhost:5173
       SMTP_HOST: mailcatcher
       SMTP_PORT: "1025"
       SMTP_TLS: "false"

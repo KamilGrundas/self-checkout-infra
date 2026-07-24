@@ -14,10 +14,7 @@ export S3_USE_SSL=false
 export S3_FORCE_PATH_STYLE=true
 export S3_VERIFY_TLS=true
 
-files="-f compose.yml -f compose.override.yml -f compose.s3-contract-test.yml"
-if [ "${1:-}" = "--mlflow" ]; then
-  files="$files -f compose.mlflow.yml"
-fi
+files="-f compose.yml -f compose.override.yml -f compose.s3-contract-test.yml -f compose.mlflow.yml"
 
 # shellcheck disable=SC2086
 docker compose $files up --build -d

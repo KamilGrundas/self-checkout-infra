@@ -36,6 +36,8 @@ ensure_value() {
 set_value PROJECT_NAME 'Self Checkout Backend'
 set_value ENVIRONMENT local
 set_value S3_ENDPOINT_URL 'http://s3-provider:8080'
+existing_api_url="$(sed -n 's/^VITE_API_URL=//p' "$ENV_FILE" | tail -n 1)"
+ensure_value BACKEND_PUBLIC_URL "${existing_api_url:-http://localhost:8000}"
 if [ -n "${DEV_PUBLIC_HOST:-}" ]; then
   case "$DEV_PUBLIC_HOST" in
     *[!A-Za-z0-9.-]*)
@@ -44,6 +46,7 @@ if [ -n "${DEV_PUBLIC_HOST:-}" ]; then
       ;;
   esac
   set_value FRONTEND_HOST "http://$DEV_PUBLIC_HOST:5173"
+  set_value BACKEND_PUBLIC_URL "http://$DEV_PUBLIC_HOST:8000"
   set_value VITE_API_URL "http://$DEV_PUBLIC_HOST:8000"
   set_value BACKEND_CORS_ORIGINS "http://$DEV_PUBLIC_HOST:5173"
 fi

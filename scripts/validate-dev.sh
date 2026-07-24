@@ -5,7 +5,7 @@ SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 ROOT_DIR="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT_DIR"
 
-compose=(docker compose -f compose.yml -f compose.override.yml -f compose.s3-contract-test.yml -f compose.validation.yml)
+compose=(docker compose -f compose.yml -f compose.override.yml -f compose.s3-contract-test.yml -f compose.mlflow.yml -f compose.validation.yml)
 "${compose[@]}" config --quiet
 
 selected=("$@")
