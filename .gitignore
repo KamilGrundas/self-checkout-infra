@@ -8,6 +8,11 @@ node_modules/
 .env
 mydata/
 .cache/
+refresh-logs/
+refresh-manifests/
+refresh-snapshots/
+refresh-state/
+snapshots/
 *.pem
 *.key
 *.p12
