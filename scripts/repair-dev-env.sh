@@ -38,6 +38,11 @@ set_value ENVIRONMENT local
 set_value S3_ENDPOINT_URL 'http://s3-provider:8080'
 existing_api_url="$(sed -n 's/^VITE_API_URL=//p' "$ENV_FILE" | tail -n 1)"
 ensure_value BACKEND_PUBLIC_URL "${existing_api_url:-http://localhost:8000}"
+case "$existing_api_url" in
+  *:8000) default_ml_api_url="${existing_api_url%:8000}:8001" ;;
+  *) default_ml_api_url='http://localhost:8001' ;;
+esac
+ensure_value VITE_ML_API_URL "$default_ml_api_url"
 if [ -n "${DEV_PUBLIC_HOST:-}" ]; then
   case "$DEV_PUBLIC_HOST" in
     *[!A-Za-z0-9.-]*)
@@ -48,6 +53,7 @@ if [ -n "${DEV_PUBLIC_HOST:-}" ]; then
   set_value FRONTEND_HOST "http://$DEV_PUBLIC_HOST:5173"
   set_value BACKEND_PUBLIC_URL "http://$DEV_PUBLIC_HOST:8000"
   set_value VITE_API_URL "http://$DEV_PUBLIC_HOST:8000"
+  set_value VITE_ML_API_URL "http://$DEV_PUBLIC_HOST:8001"
   set_value BACKEND_CORS_ORIGINS "http://$DEV_PUBLIC_HOST:5173"
 fi
 ensure_value S3_REGION us-east-1

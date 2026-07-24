@@ -47,6 +47,8 @@ generic endpoint and credential configuration. The ML API remains healthy
 without MLflow, but training, registry, and model-loading workflows require it.
 Standard dev startup brings up backend, admin, ML API, PostgreSQL, MLflow,
 Label Studio, and the development mail catcher together.
+The admin image receives browser-accessible `VITE_API_URL` and
+`VITE_ML_API_URL` values at build time.
 
 ## Development validation
 

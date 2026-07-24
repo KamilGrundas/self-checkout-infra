@@ -91,6 +91,7 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_API_URL=${VITE_API_URL?Variable not set}
+        - VITE_ML_API_URL=${VITE_ML_API_URL?Variable not set}
 
   ml:
     image: ${DOCKER_IMAGE_ML?Variable not set}:${TAG?Variable not set}

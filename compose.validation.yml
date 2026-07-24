@@ -59,6 +59,7 @@ services:
     environment:
       CI: "true"
       VITE_API_URL: http://backend:8000
+      VITE_ML_API_URL: http://ml:8000
       MAILCATCHER_HOST: http://mailcatcher:1080
     depends_on:
       backend:
