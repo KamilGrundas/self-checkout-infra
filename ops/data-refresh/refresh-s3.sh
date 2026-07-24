@@ -27,7 +27,7 @@ done
   die "S3 source and target endpoint/bucket pairs are identical"
 
 print_direction_plan
-log "S3 plan: list/read prod bucket $PROD_S3_BUCKET, copy object bodies and metadata to dev bucket $DEV_S3_BUCKET"
+log "S3 plan: list/read prod bucket $PROD_S3_BUCKET and copy object bodies to dev bucket $DEV_S3_BUCKET"
 log "Credentials, policies, bucket configuration, and environment files are not copied"
 [ "$replace_dev" = false ] ||
   log "Replace mode requested: existing dev objects will be deleted only after confirmation"
