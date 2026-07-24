@@ -36,6 +36,17 @@ ensure_value() {
 set_value PROJECT_NAME 'Self Checkout Backend'
 set_value ENVIRONMENT local
 set_value S3_ENDPOINT_URL 'http://s3-provider:8080'
+if [ -n "${DEV_PUBLIC_HOST:-}" ]; then
+  case "$DEV_PUBLIC_HOST" in
+    *[!A-Za-z0-9.-]*)
+      printf 'ERROR: DEV_PUBLIC_HOST must be a hostname or IPv4 address without a scheme or port\n' >&2
+      exit 1
+      ;;
+  esac
+  set_value FRONTEND_HOST "http://$DEV_PUBLIC_HOST:5173"
+  set_value VITE_API_URL "http://$DEV_PUBLIC_HOST:8000"
+  set_value BACKEND_CORS_ORIGINS "http://$DEV_PUBLIC_HOST:5173"
+fi
 ensure_value S3_REGION us-east-1
 ensure_value S3_BUCKET product-images
 ensure_value S3_ACCESS_KEY_ID "$(random_hex 12)"

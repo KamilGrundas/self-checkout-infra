@@ -20,6 +20,14 @@ No permanent S3-compatible provider is selected. Normal dev operation points
 `S3_ENDPOINT_URL` at an external endpoint or at the DNS alias supplied by an
 explicit provider overlay. Production always uses an external endpoint.
 
+To expose the admin UI and API to other machines on the development LAN, set
+the runtime host without a scheme or port and rebuild the application services:
+
+```bash
+DEV_PUBLIC_HOST=192.0.2.10 ./scripts/repair-dev-env.sh
+docker compose -f compose.yml -f compose.override.yml up --build -d
+```
+
 ## Configuration
 
 Copy `.env.example` to the remote dev host through `scripts/init-dev-env.sh`.
