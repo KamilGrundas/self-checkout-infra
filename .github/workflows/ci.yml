@@ -16,15 +16,20 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Shell syntax
-        run: bash -n scripts/*.sh
+        run: |
+          find scripts ops tests -type f -name '*.sh' -print0 |
+            xargs -0 -n1 bash -n
       - name: YAML syntax
         run: |
-          ruby -e 'require "yaml"; Dir["*.yml", "*.yaml"].each { |file| YAML.load_file(file); puts "#{file}: OK" }'
+          ruby -e 'require "yaml"; Dir["*.yml", "*.yaml"].each { |file| YAML.safe_load(File.read(file), aliases: true); puts "#{file}: OK" }'
       - name: Compose configuration
         run: |
           cp .env.example .env
           docker compose -f compose.yml -f compose.override.yml config --quiet
-          docker compose -f compose.yml -f compose.override.yml -f compose.validation.yml config --quiet
+          docker compose -f compose.yml -f compose.override.yml -f compose.s3-contract-test.yml -f compose.validation.yml config --quiet
+          docker compose --env-file .env.prod.example -f compose.yml -f compose.prod.yml config --quiet
+          S3_DEV_IMAGE=example.invalid/s3 S3_DEV_IMAGE_TAG=1.0.0 \
+            docker compose -f compose.yml -f compose.override.yml -f compose.s3-provider.example.yml config --quiet
 
   integration-required:
     if: ${{ github.event_name == 'pull_request' }}

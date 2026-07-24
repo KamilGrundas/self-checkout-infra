@@ -1,0 +1,29 @@
+# Source/target identity is independently anchored by marker files containing
+# exactly "prod" and "dev". Store this configuration outside Git with mode 600.
+PROD_SOURCE_MARKER_FILE=/run/config/source-environment
+DEV_TARGET_MARKER_FILE=/run/config/target-environment
+PROD_SOURCE_ID=production-read-only
+DEV_TARGET_ID=self-checkout-dev
+
+PROD_DATABASE_URL=<read-only-postgresql-url>
+DEV_DATABASE_URL=<dev-postgresql-url>
+DEV_DATABASE_NAME=app
+
+PROD_S3_ENDPOINT_URL=https://s3-source.example.invalid
+PROD_S3_REGION=us-east-1
+PROD_S3_BUCKET=application-data
+PROD_S3_ACCESS_KEY_ID=<read-only-list-get-key>
+PROD_S3_SECRET_ACCESS_KEY=<secret>
+PROD_S3_SESSION_TOKEN=
+PROD_S3_ACCESS_MODE=read-only
+
+DEV_S3_ENDPOINT_URL=https://s3-dev.example.invalid
+DEV_S3_REGION=us-east-1
+DEV_S3_BUCKET=application-data-dev
+DEV_S3_ACCESS_KEY_ID=<dev-write-key>
+DEV_S3_SECRET_ACCESS_KEY=<secret>
+DEV_S3_SESSION_TOKEN=
+
+MLFLOW_BACKEND_INCLUDED_IN_POSTGRES=true
+MLFLOW_ARTIFACTS_INCLUDED_IN_S3=true
+DEV_HEALTHCHECK_URL=http://backend:8000/api/v1/utils/health-check/

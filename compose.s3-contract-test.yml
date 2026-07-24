@@ -1,0 +1,46 @@
+# Isolated automated-test fixture only. This is not an architectural provider
+# choice and must not be included in production or normal development startup.
+services:
+  s3-contract-test:
+    image: localstack/localstack:4.8.1
+    restart: "no"
+    environment:
+      SERVICES: s3
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: contract-test
+      AWS_SECRET_ACCESS_KEY: contract-test
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  prestart:
+    environment:
+      S3_ENDPOINT_URL: http://s3-contract-test:4566
+      S3_ACCESS_KEY_ID: contract-test
+      S3_SECRET_ACCESS_KEY: contract-test
+      S3_CREATE_BUCKETS: "true"
+    depends_on:
+      s3-contract-test:
+        condition: service_healthy
+
+  backend:
+    environment:
+      S3_ENDPOINT_URL: http://s3-contract-test:4566
+      S3_ACCESS_KEY_ID: contract-test
+      S3_SECRET_ACCESS_KEY: contract-test
+      S3_CREATE_BUCKETS: "true"
+    depends_on:
+      s3-contract-test:
+        condition: service_healthy
+
+  ml:
+    environment:
+      S3_ENDPOINT_URL: http://s3-contract-test:4566
+      S3_ACCESS_KEY_ID: contract-test
+      S3_SECRET_ACCESS_KEY: contract-test
+      S3_CREATE_BUCKETS: "true"
+    depends_on:
+      s3-contract-test:
+        condition: service_healthy

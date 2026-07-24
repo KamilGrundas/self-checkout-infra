@@ -38,8 +38,8 @@ set_value() {
 set_value SECRET_KEY "$(random_hex 32)"
 set_value FIRST_SUPERUSER_PASSWORD "$(random_hex 18)"
 set_value POSTGRES_PASSWORD "$(random_hex 18)"
-set_value MINIO_ACCESS_KEY "$(random_hex 12)"
-set_value MINIO_SECRET_KEY "$(random_hex 24)"
+set_value S3_ACCESS_KEY_ID "$(random_hex 12)"
+set_value S3_SECRET_ACCESS_KEY "$(random_hex 24)"
 set_value LABEL_STUDIO_PASSWORD "$(random_hex 18)"
 set_value LABEL_STUDIO_API_KEY "$(random_hex 24)"
 

@@ -1,22 +1,44 @@
 services:
   db:
+    image: postgres:18.4@sha256:3a82e1f56c8f0f5616a11103ac3d47e632c3938698946a7ad26da0df1334744a
     restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    volumes:
+      - app-db-data:/var/lib/postgresql/data/pgdata
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?Variable not set}
+      POSTGRES_USER: ${POSTGRES_USER?Variable not set}
+      POSTGRES_DB: ${POSTGRES_DB?Variable not set}
     ports:
       - "5432:5432"
 
-  minio:
-    restart: "no"
-    ports:
-      - "9000:9000"
-      - "9001:9001"
+  prestart:
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?connect_timeout=${DB_CONNECT_TIMEOUT:-10}
 
   backend:
     restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+      mailcatcher:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?connect_timeout=${DB_CONNECT_TIMEOUT:-10}
+      SMTP_HOST: mailcatcher
     ports:
       - "8000:8000"
-    build:
-      context: ../self-checkout-backend
-      dockerfile: Dockerfile
     command:
       - fastapi
       - run
@@ -39,19 +61,11 @@ services:
     restart: "no"
     ports:
       - "5173:80"
-    build:
-      context: ../self-checkout-admin
-      dockerfile: Dockerfile
-      args:
-        - VITE_API_URL=${VITE_API_URL?Variable not set}
 
   ml:
     restart: "no"
     ports:
       - "8001:8000"
-    build:
-      context: ../self-checkout-ml
-      dockerfile: Dockerfile
     command:
       - fastapi
       - run
@@ -62,3 +76,12 @@ services:
         - path: ../self-checkout-ml
           action: sync
           target: /app
+
+  mailcatcher:
+    image: sj26/mailcatcher:v0.10.0@sha256:5d153a4daadf0c266f29c3856085741f06ca1e3768671f4267622d3e3ffe5564
+    restart: "no"
+    ports:
+      - "1080:1080"
+
+volumes:
+  app-db-data:
