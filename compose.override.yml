@@ -76,6 +76,32 @@ services:
         - path: ../self-checkout-ml
           action: sync
           target: /app
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  ml-worker:
+    restart: "no"
+    depends_on:
+      redis:
+        condition: service_healthy
+    develop:
+      watch:
+        - path: ../self-checkout-ml
+          action: sync+restart
+          target: /app
+
+  redis:
+    image: redis:8.8.1-alpine@sha256:8096655e437712b07503796fb64d81359256cfcff0ab29d95a7da72863786efb
+    restart: "no"
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - training-queue-data:/data
 
   mailcatcher:
     image: sj26/mailcatcher:v0.10.0@sha256:5d153a4daadf0c266f29c3856085741f06ca1e3768671f4267622d3e3ffe5564
@@ -85,3 +111,4 @@ services:
 
 volumes:
   app-db-data:
+  training-queue-data:

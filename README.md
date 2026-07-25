@@ -6,10 +6,12 @@ workflows.
 
 ## Compose topology
 
-- `compose.yml`: application-only base (`backend`, `admin`, `ml`, migrations).
-- `compose.override.yml`: dev PostgreSQL, ports, reload, and local volumes.
-- `compose.prod.yml`: required external PostgreSQL and S3 configuration; no
-  stateful services.
+- `compose.yml`: application base (`backend`, `admin`, `ml`, `ml-worker`,
+  migrations).
+- `compose.override.yml`: dev PostgreSQL, Redis, ports, reload, and local
+  volumes.
+- `compose.prod.yml`: required external PostgreSQL, Redis, and S3
+  configuration; no stateful service containers.
 - `compose.mlflow.yml`: dev MLflow and Label Studio, included by the standard
   dev startup scripts.
 - `compose.s3-provider.example.yml`: provider-neutral overlay contract with an
@@ -41,12 +43,17 @@ supports endpoint, region, optional static/session credentials, TLS
 verification, path-style addressing, retry/timeout settings, public delivery
 base URL, and explicit dev-only bucket creation.
 
+Classifier training uses `TRAINING_QUEUE_URL`. Dev Compose starts a persistent
+Redis queue and a dedicated RQ worker; production requires an external Redis
+connection. The API persists job state in Redis so progress remains available
+across API restarts.
+
 MLflow separates `MLFLOW_TRACKING_URI`, `MLFLOW_BACKEND_STORE_URI`, and
 `MLFLOW_ARTIFACT_ROOT`. Its artifact root may be an S3 URI and receives the same
 generic endpoint and credential configuration. The ML API remains healthy
 without MLflow, but training, registry, and model-loading workflows require it.
-Standard dev startup brings up backend, admin, ML API, PostgreSQL, MLflow,
-Label Studio, and the development mail catcher together.
+Standard dev startup brings up backend, admin, ML API, ML worker, PostgreSQL,
+Redis, MLflow, Label Studio, and the development mail catcher together.
 The admin image receives browser-accessible `VITE_API_URL` and
 `VITE_ML_API_URL` values at build time.
 
