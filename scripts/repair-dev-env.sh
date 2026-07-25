@@ -35,7 +35,7 @@ ensure_value() {
 
 set_value PROJECT_NAME 'Self Checkout Backend'
 set_value ENVIRONMENT local
-set_value S3_ENDPOINT_URL 'http://s3-provider:8080'
+ensure_value S3_ENDPOINT_URL 'http://s3-provider:8080'
 existing_api_url="$(sed -n 's/^VITE_API_URL=//p' "$ENV_FILE" | tail -n 1)"
 ensure_value BACKEND_PUBLIC_URL "${existing_api_url:-http://localhost:8000}"
 case "$existing_api_url" in
