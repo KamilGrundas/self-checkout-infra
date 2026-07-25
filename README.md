@@ -23,12 +23,14 @@ No permanent S3-compatible provider is selected. Normal dev operation points
 `S3_ENDPOINT_URL` at an external endpoint or at the DNS alias supplied by an
 explicit provider overlay. Production always uses an external endpoint.
 
-To expose the admin UI and API to other machines on the development LAN, set
-the runtime host without a scheme or port and rebuild the application services:
+To expose the admin UI, APIs, and MLflow to other machines on the development
+LAN, set the runtime host without a scheme or port and rebuild the application
+services. The repair script adds the public MLflow address to its allowed-host
+and CORS-origin lists:
 
 ```bash
 DEV_PUBLIC_HOST=192.0.2.10 ./scripts/repair-dev-env.sh
-docker compose -f compose.yml -f compose.override.yml up --build -d
+docker compose -f compose.yml -f compose.override.yml -f compose.mlflow.yml up --build -d
 ```
 
 ## Configuration
