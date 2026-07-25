@@ -43,6 +43,10 @@ case "$existing_api_url" in
   *) default_ml_api_url='http://localhost:8001' ;;
 esac
 ensure_value VITE_ML_API_URL "$default_ml_api_url"
+default_mlflow_allowed_hosts='mlflow:5000,localhost:5000,localhost:5002,127.0.0.1:5000,127.0.0.1:5002'
+default_mlflow_cors_allowed_origins='http://localhost:5002,http://127.0.0.1:5002'
+ensure_value MLFLOW_SERVER_ALLOWED_HOSTS "$default_mlflow_allowed_hosts"
+ensure_value MLFLOW_SERVER_CORS_ALLOWED_ORIGINS "$default_mlflow_cors_allowed_origins"
 if [ -n "${DEV_PUBLIC_HOST:-}" ]; then
   case "$DEV_PUBLIC_HOST" in
     *[!A-Za-z0-9.-]*)
@@ -55,6 +59,8 @@ if [ -n "${DEV_PUBLIC_HOST:-}" ]; then
   set_value VITE_API_URL "http://$DEV_PUBLIC_HOST:8000"
   set_value VITE_ML_API_URL "http://$DEV_PUBLIC_HOST:8001"
   set_value BACKEND_CORS_ORIGINS "http://$DEV_PUBLIC_HOST:5173"
+  set_value MLFLOW_SERVER_ALLOWED_HOSTS "$default_mlflow_allowed_hosts,$DEV_PUBLIC_HOST:5002"
+  set_value MLFLOW_SERVER_CORS_ALLOWED_ORIGINS "$default_mlflow_cors_allowed_origins,http://$DEV_PUBLIC_HOST:5002"
 fi
 ensure_value S3_REGION us-east-1
 ensure_value S3_BUCKET product-images
