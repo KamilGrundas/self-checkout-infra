@@ -6,4 +6,9 @@ ROOT_DIR="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
 
 cd "$ROOT_DIR"
 
-docker compose -f compose.yml -f compose.override.yml -f compose.mlflow.yml up --build -d
+docker compose \
+  -f compose.yml \
+  -f compose.override.yml \
+  -f compose.s3.dev.yml \
+  -f compose.mlflow.yml \
+  up --build -d
