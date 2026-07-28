@@ -14,14 +14,18 @@ workflows.
   configuration; no stateful service containers.
 - `compose.mlflow.yml`: dev MLflow and Label Studio, included by the standard
   dev startup scripts.
+- `compose.s3.dev.yml`: selected, replaceable MinIO provider for normal
+  development, using the generic `s3-provider` DNS contract and the retained
+  `minio-data` volume.
 - `compose.s3-provider.example.yml`: provider-neutral overlay contract with an
   image/version placeholder.
 - `compose.s3-contract-test.yml`: isolated automated-test fixture only.
 - `compose.validation.yml`: repository builds, tests, and integration checks.
 
-No permanent S3-compatible provider is selected. Normal dev operation points
-`S3_ENDPOINT_URL` at an external endpoint or at the DNS alias supplied by an
-explicit provider overlay. Production always uses an external endpoint.
+Normal dev selects the pinned MinIO overlay, while application services remain
+provider-neutral through `S3_*` configuration. The overlay can be replaced
+without application-code changes. Production always uses an external endpoint
+and never starts MinIO.
 
 To expose the admin UI, APIs, and MLflow to other machines on the development
 LAN, set the runtime host without a scheme or port and rebuild the application
@@ -30,7 +34,7 @@ and CORS-origin lists:
 
 ```bash
 DEV_PUBLIC_HOST=192.0.2.10 ./scripts/repair-dev-env.sh
-docker compose -f compose.yml -f compose.override.yml -f compose.mlflow.yml up --build -d
+./scripts/up.sh
 ```
 
 ## Configuration
@@ -45,9 +49,11 @@ supports endpoint, region, optional static/session credentials, TLS
 verification, path-style addressing, retry/timeout settings, public delivery
 base URL, and explicit dev-only bucket creation.
 
-Classifier training uses `TRAINING_QUEUE_URL`. Dev Compose starts a persistent
-Redis queue and a dedicated RQ worker; production requires an external Redis
-connection. The API persists job state in Redis so progress remains available
+Classifier training and scale-image autolabeling use `TRAINING_QUEUE_URL`. Dev
+Compose starts persistent Redis-backed queues and separate RQ workers. The
+`ml-autolabel-worker` consumes only `scale-autolabel` with one worker process,
+so local VLM requests are sequential and never block classifier training.
+Production requires an external Redis connection. The API persists job state in Redis so progress remains available
 across API restarts.
 
 MLflow separates `MLFLOW_TRACKING_URI`, `MLFLOW_BACKEND_STORE_URI`, and
@@ -59,6 +65,41 @@ Redis, MLflow, Label Studio, and the development mail catcher together.
 The admin image receives browser-accessible `VITE_API_URL` and
 `VITE_ML_API_URL` values at build time.
 
+## Scale VLM development workflow
+
+The VLM endpoint is application data managed by a superuser, not a build-time
+frontend variable or an infrastructure secret. Configure development safely
+through the backend API:
+
+```bash
+./scripts/configure-scale-vlm-dev.sh \
+  http://192.168.0.29:8088/v1/files/inference 512 5 120
+```
+
+Probe the real endpoint with one non-empty image read from
+`S3_SCALE_BUCKET`, while printing only status, content type, size, hash, and an
+anonymized response shape:
+
+```bash
+./scripts/probe-scale-vlm-dev.sh \
+  http://192.168.0.29:8088/v1/files/inference
+```
+
+The probe rejects credentials/fragments, disables redirects, bounds timeouts
+and response size, and does not persist the image or raw response.
+
+Backend OpenAPI changes must regenerate the admin client with the controlled
+development container:
+
+```bash
+./scripts/generate-admin-client-dev.sh
+./scripts/format-admin-dev.sh
+```
+
+The first command replaces `openapi.json` and generated `src/client/**`; the
+second formats only the reviewed admin files owned by this feature. Neither
+script commits or pushes changes.
+
 ## Development validation
 
 Docker commands run only on the marked `dev` host through workspace scripts:
@@ -67,11 +108,11 @@ Docker commands run only on the marked `dev` host through workspace scripts:
 ../ops/dev-test.sh
 ```
 
-Validation starts the full dev stack, attaches the isolated S3 contract fixture,
-and tests bucket
+Validation starts the full dev stack, replaces normal MinIO with the isolated
+S3 contract fixture, and tests bucket
 availability/creation, custom endpoint, path-style addressing, write, read,
-list, metadata, content type, and delete. The fixture is not started by
-`scripts/up.sh` and is never included in production.
+list, metadata, content type, and delete. The contract fixture is not started
+by `scripts/up.sh` and is never included in production.
 
 ## Data refresh and reset
 

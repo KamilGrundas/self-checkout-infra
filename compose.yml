@@ -127,5 +127,17 @@ services:
       context: ../self-checkout-ml
       dockerfile: Dockerfile
 
+  ml-autolabel-worker:
+    image: ${DOCKER_IMAGE_ML?Variable not set}:${TAG?Variable not set}
+    restart: always
+    environment: *ml-environment
+    command:
+      - sh
+      - -c
+      - exec rq worker --url "$$TRAINING_QUEUE_URL" scale-autolabel
+    build:
+      context: ../self-checkout-ml
+      dockerfile: Dockerfile
+
 volumes:
   ml-model-cache:

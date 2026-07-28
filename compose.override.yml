@@ -91,6 +91,17 @@ services:
           action: sync+restart
           target: /app
 
+  ml-autolabel-worker:
+    restart: "no"
+    depends_on:
+      redis:
+        condition: service_healthy
+    develop:
+      watch:
+        - path: ../self-checkout-ml
+          action: sync+restart
+          target: /app
+
   redis:
     image: redis:8.8.1-alpine@sha256:8096655e437712b07503796fb64d81359256cfcff0ab29d95a7da72863786efb
     restart: "no"
