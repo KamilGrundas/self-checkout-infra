@@ -12,12 +12,12 @@ compose=(
   -f compose.yml
   -f compose.override.yml
   -f compose.s3-contract-test.yml
-  -f compose.mlflow.yml
   -f compose.validation.yml
 )
 
 admin_files=(
   /workspace/src/components/ML/ImagesTab.tsx
+  /workspace/src/components/ML/LabeledImagesTab.tsx
   /workspace/src/components/CheckoutCounters/EditCheckoutCounter.tsx
   /workspace/src/routes/_layout/ml.tsx
   /workspace/src/routes/_layout/checkout-counters.tsx
@@ -32,6 +32,7 @@ trap '"${compose[@]}" run --rm --no-deps admin-validation chown "$admin_owner" "
   npm ci
   npx biome check --write \
     src/components/ML/ImagesTab.tsx \
+    src/components/ML/LabeledImagesTab.tsx \
     src/components/CheckoutCounters/EditCheckoutCounter.tsx \
     src/routes/_layout/ml.tsx \
     src/routes/_layout/checkout-counters.tsx \

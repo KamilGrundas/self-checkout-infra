@@ -12,7 +12,6 @@ compose=(
   -f compose.yml
   -f compose.override.yml
   -f compose.s3-contract-test.yml
-  -f compose.mlflow.yml
   -f compose.validation.yml
 )
 admin_owner="$(stat -c '%u:%g' "$ADMIN_DIR")"

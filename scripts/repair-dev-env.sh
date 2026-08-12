@@ -22,6 +22,15 @@ set_value() {
   chmod 600 "$ENV_FILE"
 }
 
+remove_value() {
+  key="$1"
+  next_file="$ENV_FILE.next.$$"
+  awk -v unwanted="$key" 'index($0, unwanted "=") != 1 { print }' \
+    "$ENV_FILE" > "$next_file"
+  mv "$next_file" "$ENV_FILE"
+  chmod 600 "$ENV_FILE"
+}
+
 random_hex() {
   byte_count="$1"
   head -c "$byte_count" /dev/urandom | od -An -tx1 | tr -d ' \n'
@@ -32,6 +41,28 @@ ensure_value() {
   value="$2"
   grep -Eq "^${key}=.+" "$ENV_FILE" || set_value "$key" "$value"
 }
+
+for obsolete_key in \
+  MODEL_CACHE_DIR \
+  S3_LABEL_STUDIO_EXPORT_BUCKET \
+  MLFLOW_TRACKING_URI \
+  MLFLOW_BACKEND_STORE_URI \
+  MLFLOW_ARTIFACT_ROOT \
+  MLFLOW_SERVER_ALLOWED_HOSTS \
+  MLFLOW_SERVER_CORS_ALLOWED_ORIGINS \
+  MLFLOW_REGISTERED_MODEL_NAME \
+  MLFLOW_SHELF_EXPERIMENT_NAME \
+  MLFLOW_SHELF_MODEL_NAME \
+  LABEL_STUDIO_URL \
+  LABEL_STUDIO_USERNAME \
+  LABEL_STUDIO_PASSWORD \
+  LABEL_STUDIO_API_KEY \
+  LABEL_STUDIO_SCALE_PROJECT_TITLE \
+  LABEL_STUDIO_SHELF_PROJECT_TITLE \
+  LABEL_STUDIO_EXTERNAL_PROJECT_TITLE
+do
+  remove_value "$obsolete_key"
+done
 
 set_value PROJECT_NAME 'Self Checkout Backend'
 set_value ENVIRONMENT local
@@ -50,10 +81,6 @@ case "$existing_api_url" in
 esac
 ensure_value VITE_ML_API_URL "$default_ml_api_url"
 ensure_value S3_PUBLIC_BASE_URL "$default_s3_public_url"
-default_mlflow_allowed_hosts='mlflow:5000,localhost:5000,localhost:5002,127.0.0.1:5000,127.0.0.1:5002'
-default_mlflow_cors_allowed_origins='http://localhost:5002,http://127.0.0.1:5002'
-ensure_value MLFLOW_SERVER_ALLOWED_HOSTS "$default_mlflow_allowed_hosts"
-ensure_value MLFLOW_SERVER_CORS_ALLOWED_ORIGINS "$default_mlflow_cors_allowed_origins"
 if [ -n "${DEV_PUBLIC_HOST:-}" ]; then
   case "$DEV_PUBLIC_HOST" in
     *[!A-Za-z0-9.-]*)
@@ -67,8 +94,6 @@ if [ -n "${DEV_PUBLIC_HOST:-}" ]; then
   set_value VITE_ML_API_URL "http://$DEV_PUBLIC_HOST:8001"
   set_value S3_PUBLIC_BASE_URL "http://$DEV_PUBLIC_HOST:8082"
   set_value BACKEND_CORS_ORIGINS "http://$DEV_PUBLIC_HOST:5173"
-  set_value MLFLOW_SERVER_ALLOWED_HOSTS "$default_mlflow_allowed_hosts,$DEV_PUBLIC_HOST:5002"
-  set_value MLFLOW_SERVER_CORS_ALLOWED_ORIGINS "$default_mlflow_cors_allowed_origins,http://$DEV_PUBLIC_HOST:5002"
 fi
 ensure_value S3_REGION us-east-1
 ensure_value S3_BUCKET product-images
@@ -82,7 +107,4 @@ ensure_value S3_SHELF_BUCKET session-images
 ensure_value S3_SCALE_BUCKET scale-images
 ensure_value S3_EXTERNAL_BUCKET uploaded-images
 ensure_value S3_TRAINING_BUCKET training-data
-ensure_value S3_LABEL_STUDIO_EXPORT_BUCKET labelstudio-exports
-ensure_value MLFLOW_BACKEND_STORE_URI 'sqlite:////mlflow/mlflow.db'
-ensure_value MLFLOW_ARTIFACT_ROOT 's3://mlflow-artifacts'
 printf 'Repaired non-secret dev environment metadata in %s\n' "$ENV_FILE"

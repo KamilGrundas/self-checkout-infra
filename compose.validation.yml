@@ -112,7 +112,6 @@ services:
       S3_SCALE_BUCKET: contract-scale
       S3_EXTERNAL_BUCKET: contract-external
       S3_TRAINING_BUCKET: contract-training
-      S3_LABEL_STUDIO_EXPORT_BUCKET: contract-exports
     depends_on:
       s3-contract-test:
         condition: service_healthy

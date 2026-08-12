@@ -15,7 +15,7 @@ esac
 
 cd "$ROOT_DIR"
 
-docker compose -f compose.yml -f compose.override.yml -f compose.s3.dev.yml -f compose.mlflow.yml exec -T \
+docker compose -f compose.yml -f compose.override.yml -f compose.s3.dev.yml exec -T \
   -e SCALE_VLM_ENDPOINT_URL="$ENDPOINT_URL" \
   -e SCALE_VLM_MAX_TOKENS="$MAX_TOKENS" \
   -e SCALE_VLM_CONNECT_TIMEOUT="$CONNECT_TIMEOUT_SECONDS" \

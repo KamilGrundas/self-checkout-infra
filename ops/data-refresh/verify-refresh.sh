@@ -7,7 +7,7 @@ SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 validate_direction
 init_log
 print_direction_plan
-log "Verify dev PostgreSQL connectivity, application health, S3 readability, and optional MLflow relationships"
+log "Verify dev PostgreSQL connectivity, application health, and S3 readability"
 
 if [ -n "${DEV_DATABASE_URL:-}" ]; then
   require_command psql
