@@ -5,7 +5,7 @@
 services:
   s3-provider:
     image: ${S3_DEV_IMAGE?Choose an S3-compatible provider}:${S3_DEV_IMAGE_TAG?Pin an exact provider version}
-    restart: "no"
+    restart: unless-stopped
     networks:
       default:
         aliases:

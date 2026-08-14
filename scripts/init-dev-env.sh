@@ -40,9 +40,6 @@ set_value FIRST_SUPERUSER_PASSWORD "$(random_hex 18)"
 set_value POSTGRES_PASSWORD "$(random_hex 18)"
 set_value S3_ACCESS_KEY_ID "$(random_hex 12)"
 set_value S3_SECRET_ACCESS_KEY "$(random_hex 24)"
-set_value LABEL_STUDIO_PASSWORD "$(random_hex 18)"
-set_value LABEL_STUDIO_API_KEY "$(random_hex 24)"
-
 mv "$temporary" "$ENV_FILE"
 trap - EXIT
 chmod 600 "$ENV_FILE"

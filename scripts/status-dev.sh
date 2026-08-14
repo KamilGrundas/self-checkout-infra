@@ -9,5 +9,4 @@ docker compose \
   -f compose.yml \
   -f compose.override.yml \
   -f compose.s3.dev.yml \
-  -f compose.mlflow.yml \
   ps

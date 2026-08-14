@@ -1,128 +1,60 @@
 # Self-checkout infrastructure
 
-This repository owns Docker Compose topology, development validation, external
-service configuration, health checks, and controlled data-refresh/reset
-workflows.
+This repository owns Docker Compose topology, development startup, validation,
+health checks, deployment, and rollback controls.
 
 ## Compose topology
 
-- `compose.yml`: application base (`backend`, `admin`, `ml`, `ml-worker`,
-  migrations).
-- `compose.override.yml`: dev PostgreSQL, Redis, ports, reload, and local
-  volumes.
-- `compose.prod.yml`: required external PostgreSQL, Redis, and S3
-  configuration; no stateful service containers.
-- `compose.mlflow.yml`: dev MLflow and Label Studio, included by the standard
-  dev startup scripts.
-- `compose.s3.dev.yml`: selected, replaceable MinIO provider for normal
-  development, using the generic `s3-provider` DNS contract and the retained
-  `minio-data` volume.
-- `compose.s3-provider.example.yml`: provider-neutral overlay contract with an
-  image/version placeholder.
-- `compose.s3-contract-test.yml`: isolated automated-test fixture only.
-- `compose.validation.yml`: repository builds, tests, and integration checks.
+- `compose.yml` defines backend, admin, ML API, training worker, autolabel worker;
+- `compose.override.yml` adds development PostgreSQL, Redis, mail catcher, ports, and live reload;
+- `compose.s3.dev.yml` selects the replaceable development S3-compatible provider;
+- `compose.s3-contract-test.yml` provides isolated contract-test storage;
+- `compose.validation.yml` defines repository validation containers;
+- `compose.prod.yml` configures application containers for external PostgreSQL,
+  Redis, and S3-compatible dependencies.
 
-Normal dev selects the pinned MinIO overlay, while application services remain
-provider-neutral through `S3_*` configuration. The overlay can be replaced
-without application-code changes. Production always uses an external endpoint
-and never starts MinIO.
+The stack contains no MLflow or Label Studio service. Native labels, dataset
+releases, model artifacts, model metrics, and active-version metadata live in
+the configured generic S3 buckets.
 
-To expose the admin UI, APIs, and MLflow to other machines on the development
-LAN, set the runtime host without a scheme or port and rebuild the application
-services. The repair script adds the public MLflow address to its allowed-host
-and CORS-origin lists:
+## Development
+
+Run from `dev` through the parent workspace controls:
 
 ```bash
-DEV_PUBLIC_HOST=192.0.2.10 ./scripts/repair-dev-env.sh
+./scripts/init-dev-env.sh
 ./scripts/up.sh
+./scripts/status-dev.sh
+./scripts/validate-dev.sh
 ```
+
+The standard runtime is `compose.yml + compose.override.yml +
+compose.s3.dev.yml`. Validation uses the isolated contract-test overlay and is
+temporary; always restore the standard runtime after validation.
+
+All long-running services in the standard development runtime use the
+`unless-stopped` restart policy. Because the Docker service is enabled on the
+development host, PostgreSQL, Redis, object storage, backend, admin, ML API,
+and both ML workers start again automatically after a host reboot. `prestart`
+is intentionally a one-shot migration container and runs during controlled
+`scripts/up.sh` executions rather than Docker daemon restarts.
 
 ## Configuration
 
-Copy `.env.example` to the remote dev host through `scripts/init-dev-env.sh`.
-Production shape is documented by `.env.prod.example`; secrets must come from
-the deployment secret manager rather than a committed file.
+Copy `.env.example` only on `dev`. It contains placeholders for the database,
+backend/admin URLs, Redis queue, and generic S3 contract. The application uses
+separate S3 buckets for product images, shelf snapshots, scale snapshots,
+labeled uploads, and training data/models. No provider-specific application
+setting is permitted.
 
-The backend uses `DATABASE_URL`. Dev Compose constructs it for local
-PostgreSQL; production requires an external connection string. S3 configuration
-supports endpoint, region, optional static/session credentials, TLS
-verification, path-style addressing, retry/timeout settings, public delivery
-base URL, and explicit dev-only bucket creation.
-
-Classifier training and scale-image autolabeling use `TRAINING_QUEUE_URL`. Dev
-Compose starts persistent Redis-backed queues and separate RQ workers. The
-`ml-autolabel-worker` consumes only `scale-autolabel` with one worker process,
-so local VLM requests are sequential and never block classifier training.
-Production requires an external Redis connection. The API persists job state in Redis so progress remains available
-across API restarts.
-
-MLflow separates `MLFLOW_TRACKING_URI`, `MLFLOW_BACKEND_STORE_URI`, and
-`MLFLOW_ARTIFACT_ROOT`. Its artifact root may be an S3 URI and receives the same
-generic endpoint and credential configuration. The ML API remains healthy
-without MLflow, but training, registry, and model-loading workflows require it.
-Standard dev startup brings up backend, admin, ML API, ML worker, PostgreSQL,
-Redis, MLflow, Label Studio, and the development mail catcher together.
-The admin image receives browser-accessible `VITE_API_URL` and
-`VITE_ML_API_URL` values at build time.
-
-## Scale VLM development workflow
-
-The VLM endpoint is application data managed by a superuser, not a build-time
-frontend variable or an infrastructure secret. Configure development safely
-through the backend API:
-
-```bash
-./scripts/configure-scale-vlm-dev.sh \
-  http://192.168.0.29:8088/v1/files/inference 512 5 120
-```
-
-Probe the real endpoint with one non-empty image read from
-`S3_SCALE_BUCKET`, while printing only status, content type, size, hash, and an
-anonymized response shape:
-
-```bash
-./scripts/probe-scale-vlm-dev.sh \
-  http://192.168.0.29:8088/v1/files/inference
-```
-
-The probe rejects credentials/fragments, disables redirects, bounds timeouts
-and response size, and does not persist the image or raw response.
-
-Backend OpenAPI changes must regenerate the admin client with the controlled
-development container:
-
-```bash
-./scripts/generate-admin-client-dev.sh
-./scripts/format-admin-dev.sh
-```
-
-The first command replaces `openapi.json` and generated `src/client/**`; the
-second formats only the reviewed admin files owned by this feature. Neither
-script commits or pushes changes.
-
-## Development validation
-
-Docker commands run only on the marked `dev` host through workspace scripts:
-
-```bash
-../ops/dev-test.sh
-```
-
-Validation starts the full dev stack, replaces normal MinIO with the isolated
-S3 contract fixture, and tests bucket
-availability/creation, custom endpoint, path-style addressing, write, read,
-list, metadata, content type, and delete. The contract fixture is not started
-by `scripts/up.sh` and is never included in production.
+Production starts no database or object-storage provider. It accepts only
+external stateful dependencies and approved immutable application images.
 
 ## Data refresh and reset
 
-`ops/data-refresh/prod-to-dev.sh` supports `--dry-run`, `--postgres`, `--s3`,
-`--mlflow`, `--all`, `--verify-only`, `--snapshot-dev`, and dev-only
-`--replace-dev`. Source production access is read-only. Independent environment
-markers, fixed `PROD_*`/`DEV_*` roles, exact confirmations, and distinct-target
-checks prevent reverse synchronization.
+`ops/data-refresh/prod-to-dev.sh` supports one-way PostgreSQL and S3 refreshes
+only. It never copies infrastructure secrets or permits a dev-to-prod direction.
+`ops/reset-dev.sh` operates only on allowlisted development volumes after
+environment and Compose-project verification.
 
-`ops/reset-dev.sh` removes only allowlisted, Compose-labelled dev volumes. It
-never performs system-wide pruning. See the workspace `docs/data-refresh.md`
-and `docs/disaster-recovery.md` for privileges, retention, verification, and
-limitations.
+Never run Docker locally; all Compose validation belongs on `ssh dev`.

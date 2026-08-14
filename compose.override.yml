@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:18.4@sha256:3a82e1f56c8f0f5616a11103ac3d47e632c3938698946a7ad26da0df1334744a
-    restart: "no"
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
@@ -27,7 +27,7 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?connect_timeout=${DB_CONNECT_TIMEOUT:-10}
 
   backend:
-    restart: "no"
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
@@ -58,12 +58,12 @@ services:
       - ../self-checkout-backend/htmlcov:/app/backend/htmlcov
 
   admin:
-    restart: "no"
+    restart: unless-stopped
     ports:
       - "5173:80"
 
   ml:
-    restart: "no"
+    restart: unless-stopped
     ports:
       - "8001:8000"
     command:
@@ -81,7 +81,7 @@ services:
         condition: service_healthy
 
   ml-worker:
-    restart: "no"
+    restart: unless-stopped
     depends_on:
       redis:
         condition: service_healthy
@@ -92,7 +92,7 @@ services:
           target: /app
 
   ml-autolabel-worker:
-    restart: "no"
+    restart: unless-stopped
     depends_on:
       redis:
         condition: service_healthy
@@ -104,7 +104,7 @@ services:
 
   redis:
     image: redis:8.8.1-alpine@sha256:8096655e437712b07503796fb64d81359256cfcff0ab29d95a7da72863786efb
-    restart: "no"
+    restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -116,7 +116,7 @@ services:
 
   mailcatcher:
     image: sj26/mailcatcher:v0.10.0@sha256:5d153a4daadf0c266f29c3856085741f06ca1e3768671f4267622d3e3ffe5564
-    restart: "no"
+    restart: unless-stopped
     ports:
       - "1080:1080"
 

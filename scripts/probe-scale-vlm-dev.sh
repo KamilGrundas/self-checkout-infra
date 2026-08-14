@@ -15,7 +15,7 @@ esac
 
 cd "$ROOT_DIR"
 
-docker compose -f compose.yml -f compose.override.yml -f compose.s3.dev.yml -f compose.mlflow.yml exec -T \
+docker compose -f compose.yml -f compose.override.yml -f compose.s3.dev.yml exec -T \
   -e SCALE_VLM_PROBE_URL="$ENDPOINT_URL" ml python - <<'PY'
 from __future__ import annotations
 

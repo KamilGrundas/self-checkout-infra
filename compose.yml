@@ -42,18 +42,8 @@ x-ml-environment: &ml-environment
   S3_SCALE_BUCKET: ${S3_SCALE_BUCKET:-}
   S3_EXTERNAL_BUCKET: ${S3_EXTERNAL_BUCKET:-}
   S3_TRAINING_BUCKET: ${S3_TRAINING_BUCKET:-}
-  S3_LABEL_STUDIO_EXPORT_BUCKET: ${S3_LABEL_STUDIO_EXPORT_BUCKET:-}
-  MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-}
-  MLFLOW_REGISTERED_MODEL_NAME: ${MLFLOW_REGISTERED_MODEL_NAME:-self-checkout-classifier}
-  MLFLOW_SHELF_EXPERIMENT_NAME: ${MLFLOW_SHELF_EXPERIMENT_NAME:-self-checkout-shelf-classifier}
-  MLFLOW_SHELF_MODEL_NAME: ${MLFLOW_SHELF_MODEL_NAME:-self-checkout-shelf-classifier}
-  MODEL_CACHE_DIR: ${MODEL_CACHE_DIR:-.cache/model_store}
   TRAINING_QUEUE_URL: ${TRAINING_QUEUE_URL:-redis://redis:6379/0}
-  LABEL_STUDIO_URL: ${LABEL_STUDIO_URL:-}
   BACKEND_URL: http://backend:8000
-  LABEL_STUDIO_SCALE_PROJECT_TITLE: ${LABEL_STUDIO_SCALE_PROJECT_TITLE:-scale-products}
-  LABEL_STUDIO_SHELF_PROJECT_TITLE: ${LABEL_STUDIO_SHELF_PROJECT_TITLE:-shelf-products}
-  LABEL_STUDIO_EXTERNAL_PROJECT_TITLE: ${LABEL_STUDIO_EXTERNAL_PROJECT_TITLE:-external-products}
 
 services:
   prestart:
@@ -112,8 +102,6 @@ services:
     build:
       context: ../self-checkout-ml
       dockerfile: Dockerfile
-    volumes:
-      - ml-model-cache:/app/.cache
 
   ml-worker:
     image: ${DOCKER_IMAGE_ML?Variable not set}:${TAG?Variable not set}
@@ -138,6 +126,3 @@ services:
     build:
       context: ../self-checkout-ml
       dockerfile: Dockerfile
-
-volumes:
-  ml-model-cache:

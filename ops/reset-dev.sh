@@ -34,9 +34,6 @@ esac
 
 volumes=(
   "${project}_app-db-data"
-  "${project}_ml-model-cache"
-  "${project}_mlflow-data"
-  "${project}_label-studio-data"
 )
 
 printf 'DEV reset plan:\n'
