@@ -59,42 +59,21 @@ for obsolete_key in \
   LABEL_STUDIO_API_KEY \
   LABEL_STUDIO_SCALE_PROJECT_TITLE \
   LABEL_STUDIO_SHELF_PROJECT_TITLE \
-  LABEL_STUDIO_EXTERNAL_PROJECT_TITLE
+  LABEL_STUDIO_EXTERNAL_PROJECT_TITLE \
+  DEV_PUBLIC_HOST
 do
   remove_value "$obsolete_key"
 done
 
 set_value PROJECT_NAME 'Self Checkout Backend'
 set_value ENVIRONMENT local
+set_value FRONTEND_HOST 'https://dev.admin.teik.pl'
+set_value BACKEND_PUBLIC_URL 'https://dev.api.teik.pl'
+set_value VITE_API_URL 'https://dev.api.teik.pl'
+set_value VITE_ML_API_URL 'https://dev.ml.teik.pl'
+set_value BACKEND_CORS_ORIGINS 'https://dev.admin.teik.pl'
+set_value S3_PUBLIC_BASE_URL 'https://dev.s3-api.teik.pl'
 ensure_value S3_ENDPOINT_URL 'http://s3-provider:8080'
-existing_api_url="$(sed -n 's/^VITE_API_URL=//p' "$ENV_FILE" | tail -n 1)"
-ensure_value BACKEND_PUBLIC_URL "${existing_api_url:-http://localhost:8000}"
-case "$existing_api_url" in
-  *:8000)
-    default_ml_api_url="${existing_api_url%:8000}:8001"
-    default_s3_public_url="${existing_api_url%:8000}:8082"
-    ;;
-  *)
-    default_ml_api_url='http://localhost:8001'
-    default_s3_public_url='http://localhost:8082'
-    ;;
-esac
-ensure_value VITE_ML_API_URL "$default_ml_api_url"
-ensure_value S3_PUBLIC_BASE_URL "$default_s3_public_url"
-if [ -n "${DEV_PUBLIC_HOST:-}" ]; then
-  case "$DEV_PUBLIC_HOST" in
-    *[!A-Za-z0-9.-]*)
-      printf 'ERROR: DEV_PUBLIC_HOST must be a hostname or IPv4 address without a scheme or port\n' >&2
-      exit 1
-      ;;
-  esac
-  set_value FRONTEND_HOST "http://$DEV_PUBLIC_HOST:5173"
-  set_value BACKEND_PUBLIC_URL "http://$DEV_PUBLIC_HOST:8000"
-  set_value VITE_API_URL "http://$DEV_PUBLIC_HOST:8000"
-  set_value VITE_ML_API_URL "http://$DEV_PUBLIC_HOST:8001"
-  set_value S3_PUBLIC_BASE_URL "http://$DEV_PUBLIC_HOST:8082"
-  set_value BACKEND_CORS_ORIGINS "http://$DEV_PUBLIC_HOST:5173"
-fi
 ensure_value S3_REGION us-east-1
 ensure_value S3_BUCKET product-images
 ensure_value S3_ACCESS_KEY_ID "$(random_hex 12)"
