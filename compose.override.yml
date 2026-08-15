@@ -1,3 +1,12 @@
+x-dev-vlm-access: &dev-vlm-access
+  extra_hosts:
+    - "ai.teik.pl=10.77.42.50"
+  environment:
+    SSL_CERT_DIR: /etc/ssl/certs
+  volumes:
+    # OpenSSL subject hash for certificates/caddy-dev-root.crt.
+    - ./certificates/caddy-dev-root.crt:/etc/ssl/certs/fe4a7346.0:ro
+
 services:
   db:
     image: postgres:18.4@sha256:3a82e1f56c8f0f5616a11103ac3d47e632c3938698946a7ad26da0df1334744a
@@ -63,6 +72,7 @@ services:
       - "5173:80"
 
   ml:
+    <<: *dev-vlm-access
     restart: unless-stopped
     ports:
       - "8001:8000"
@@ -81,6 +91,7 @@ services:
         condition: service_healthy
 
   ml-worker:
+    <<: *dev-vlm-access
     restart: unless-stopped
     depends_on:
       redis:
@@ -92,6 +103,7 @@ services:
           target: /app
 
   ml-autolabel-worker:
+    <<: *dev-vlm-access
     restart: unless-stopped
     depends_on:
       redis:

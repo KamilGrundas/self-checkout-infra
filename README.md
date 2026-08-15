@@ -47,6 +47,19 @@ separate S3 buckets for product images, shelf snapshots, scale snapshots,
 labeled uploads, and training data/models. No provider-specific application
 setting is permitted.
 
+Browser-facing development URLs are configured independently as HTTPS origins:
+the admin UI uses `dev.admin.teik.pl`, the backend uses `dev.api.teik.pl`, the
+ML API uses `dev.ml.teik.pl`, and the S3-compatible API uses
+`dev.s3-api.teik.pl`. The S3 API hostname must proxy to port 8082 and is
+distinct from the provider console at `dev.s3.teik.pl` on port 8083.
+
+Development scale autolabeling uses
+`https://ai.teik.pl/v1/files/inference`. Because the DEV host cannot query the
+private DNS server directly, `compose.override.yml` supplies the development
+hostname mapping to ML services and adds the tracked public Caddy development
+root to their system trust directory. Keep this DEV-only; never disable TLS
+verification or copy the mapping and CA into production Compose.
+
 Production starts no database or object-storage provider. It accepts only
 external stateful dependencies and approved immutable application images.
 

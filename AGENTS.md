@@ -27,6 +27,18 @@ The base branch is `main` as recorded in `../repos.yaml`. Create short-lived bra
 
 Definition of Done: YAML and shell syntax checks pass, Compose resolves the real sibling build contexts, required services become healthy on remote dev, integration validation passes, no `.env` or secret is committed, and every volume/migration/deploy change includes compatibility and rollback notes. Production-affecting work still requires separate approval.
 
+Normal development uses explicit browser-facing HTTPS origins:
+`https://dev.admin.teik.pl`, `https://dev.api.teik.pl`,
+`https://dev.ml.teik.pl`, and the S3-compatible API at
+`https://dev.s3-api.teik.pl`. Keep these independent from Docker-internal
+service URLs. Repair and initialization scripts must not reconstruct public
+URLs from an IP address or a shared host-plus-port convention.
+
+The canonical DEV scale-inference endpoint is
+`https://ai.teik.pl/v1/files/inference`. Its hostname mapping and Caddy root CA
+belong only in `compose.override.yml`; keep certificate verification enabled
+and do not propagate DEV trust anchors or address mappings into production.
+
 Production Compose must not create PostgreSQL, an S3 server, or another
 stateful infrastructure service; application containers receive external
 connection settings. Dev Compose owns local PostgreSQL and may use external S3
