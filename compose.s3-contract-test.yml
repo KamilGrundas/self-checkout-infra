@@ -2,7 +2,7 @@
 # choice and must not be included in production or normal development startup.
 services:
   s3-contract-test:
-    image: localstack/localstack:4.8.1
+    image: docker.io/localstack/localstack:4.8.1
     restart: "no"
     environment:
       SERVICES: s3

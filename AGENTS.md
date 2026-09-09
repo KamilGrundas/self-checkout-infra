@@ -1,53 +1,46 @@
 # Infrastructure repository instructions
 
-This repository is the source of truth for Docker Compose topology, service names, build contexts, infrastructure health checks, production configuration, deployment, and rollback. `compose.yml` is the application-only base, `compose.override.yml` adds dev PostgreSQL and development behavior, and `compose.prod.yml` enforces external production dependencies.
+This repository owns portable service topology, Compose examples, health checks,
+and environment-independent deployment contracts. Start from the workspace root
+when it is available, read its instructions, then read this file. Parent
+instructions govern local operations only; do not copy absolute paths, host
+policy, selected runtime, addresses, domains, proxy configuration, identity
+provider, or inference provider into this repository.
 
-Read `../AGENTS.md` first. Inspect Git with `git -C self-checkout-infra`; never edit directly on `main` or `master`, combine repositories in one commit, or commit `.env`, `mydata`, database/object-store contents, credentials, private keys, tokens, or generated test reports. Do not rename Compose files or services without coordinating every consumer. Treat changes to volumes, ports, health checks, migrations, and production commands as high risk.
+Work on `main`, preserve existing changes, and keep this repository's commit
+separate from other components. Do not create task branches or pull requests in
+the standard workflow. Show exact changes and validation before a user-approved
+commit; push only with explicit publication approval. Never reset, clean, stash
+automatically, force-push, or rewrite history.
 
-All Docker/Compose validation runs through `ssh dev`; never invoke Docker locally. Use `../ops/dev-sync.sh --repo infra --dry-run`, then `../ops/dev-test.sh --repo infra`. Compose configuration must pass for the exact file set being used, required services must become healthy, and deploy/rollback changes require an immutable release identifier and a documented recovery path.
+## Compose contract
 
-`ssh dev-client` is a separate optional, replaceable target computer for the native
-Rust/Iced client. It does not change this repository's `dev` or `prod`
-responsibilities and is not a Docker/Compose target. Workspace-owned
-`../ops/dev-client-*.sh` scripts control client-only synchronization, native
-build, restart, and status there. Do not copy infra sources or `.env` files to
-`dev-client`, point it silently at production, or add device Docker
-requirements without explicit evidence and approval.
+Compose files use the standard Compose Specification and must work with both
+`docker compose` and `podman compose`. A local environment selects its
+runtime and owns the active entrypoint. Portable examples bind web services to
+`127.0.0.1` and never publish PostgreSQL or Redis. Every environment has an
+explicit project name and its own default network, volumes, data, configuration,
+and secrets.
 
-When `dev-client` is reachable, development runtime configuration includes a
-dedicated checkout-counter authorization in the backend on `dev` (normally
-named `dev-client`). Create or rotate it through the development API when
-missing or invalid, store its credentials only in the protected device runtime
-configuration, and verify an authenticated checkout-session connection. This
-never authorizes production configuration or data changes.
+The versioned Compose files are the reusable topology source. Do not create
+host-specific overlays, hostname mappings, trust stores, proxy rules, or
+environment entrypoints here. Those are ignored local operator configuration.
+Examples use placeholders only; `.env`, keys, data, backups, and generated
+reports remain untracked.
 
-Keep commits focused and imperative. Production scripts must verify `/etc/codex-environment`, accept only whitelisted arguments, avoid `eval`, and never accept local source synchronization.
+## Service boundaries
 
-The base branch is `main` as recorded in `../repos.yaml`. Create short-lived branches from a freshly fetched `origin/main`, and never implement directly on `main` or `master`. Use Conventional Commits with scopes such as `infra`, `compose`, `dev`, `ci`, `deploy`, or `rollback`.
+Application storage is generic S3-compatible storage. Configuration supports
+an external endpoint and a replaceable provider overlay without selecting a
+vendor in application code. Production stateful dependencies are external and
+must use separately provisioned data.
 
-Definition of Done: YAML and shell syntax checks pass, Compose resolves the real sibling build contexts, required services become healthy on remote dev, integration validation passes, no `.env` or secret is committed, and every volume/migration/deploy change includes compatibility and rollback notes. Production-affecting work still requires separate approval.
+Autolabeling uses a generic OpenAI-compatible VLM inference provider. Do not
+encode a provider product name in service names, environment variables, API
+routes, UI contracts, or portable documentation.
 
-Normal development uses explicit browser-facing HTTPS origins:
-`https://dev.admin.teik.pl`, `https://dev.api.teik.pl`,
-`https://dev.ml.teik.pl`, and the S3-compatible API at
-`https://dev.s3-api.teik.pl`. Keep these independent from Docker-internal
-service URLs. Repair and initialization scripts must not reconstruct public
-URLs from an IP address or a shared host-plus-port convention.
-
-The canonical DEV scale-inference endpoint is
-`https://ai.teik.pl/v1/files/inference`. Its hostname mapping and Caddy root CA
-belong only in `compose.override.yml`; keep certificate verification enabled
-and do not propagate DEV trust anchors or address mappings into production.
-
-Production Compose must not create PostgreSQL, an S3 server, or another
-stateful infrastructure service; application containers receive external
-connection settings. Dev Compose owns local PostgreSQL and may use external S3
-or an explicitly selected, replaceable provider overlay. No permanent S3
-provider is selected. Trained model artifacts, metadata, metrics, and active
-version pointers use the same generic S3 contract as other ML data.
-
-Data refresh scripts are strictly prod-to-dev. Production PostgreSQL and S3
-credentials are read-only; scripts must validate independent environment
-markers, support dry-run, reject identical endpoints and production-looking
-targets, avoid `eval`, log without secrets, and require exact confirmation
-before deleting dev data. Never add a reverse or general bidirectional mode.
+Before an authorized environment change, validate the exact Compose entrypoint
+with `compose config`, check script and YAML syntax, and run relevant tests.
+A configuration check is not a deployment. Production work, migration, data
+refresh, volume removal, or backup changes require separate explicit approval
+and a reviewed restore procedure.

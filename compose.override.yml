@@ -1,15 +1,6 @@
-x-dev-vlm-access: &dev-vlm-access
-  extra_hosts:
-    - "ai.teik.pl=10.77.42.50"
-  environment:
-    SSL_CERT_DIR: /etc/ssl/certs
-  volumes:
-    # OpenSSL subject hash for certificates/caddy-dev-root.crt.
-    - ./certificates/caddy-dev-root.crt:/etc/ssl/certs/fe4a7346.0:ro
-
 services:
   db:
-    image: postgres:18.4@sha256:3a82e1f56c8f0f5616a11103ac3d47e632c3938698946a7ad26da0df1334744a
+    image: docker.io/postgres:18.4@sha256:3a82e1f56c8f0f5616a11103ac3d47e632c3938698946a7ad26da0df1334744a
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
@@ -24,8 +15,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?Variable not set}
       POSTGRES_USER: ${POSTGRES_USER?Variable not set}
       POSTGRES_DB: ${POSTGRES_DB?Variable not set}
-    ports:
-      - "5432:5432"
 
   prestart:
     depends_on:
@@ -47,75 +36,45 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?connect_timeout=${DB_CONNECT_TIMEOUT:-10}
       SMTP_HOST: mailcatcher
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     command:
       - fastapi
       - run
       - --reload
       - app/main.py
-    develop:
-      watch:
-        - path: ../self-checkout-backend
-          action: sync
-          target: /app/backend
-          ignore:
-            - ../self-checkout-backend/.venv
-            - .venv
-        - path: ../self-checkout-backend/pyproject.toml
-          action: rebuild
-    volumes:
-      - ../self-checkout-backend/htmlcov:/app/backend/htmlcov
 
   admin:
     restart: unless-stopped
     ports:
-      - "5173:80"
+      - "127.0.0.1:5173:80"
 
   ml:
-    <<: *dev-vlm-access
     restart: unless-stopped
     ports:
-      - "8001:8000"
+      - "127.0.0.1:8001:8000"
     command:
       - fastapi
       - run
       - --reload
       - app/main.py
-    develop:
-      watch:
-        - path: ../self-checkout-ml
-          action: sync
-          target: /app
     depends_on:
       redis:
         condition: service_healthy
 
   ml-worker:
-    <<: *dev-vlm-access
     restart: unless-stopped
     depends_on:
       redis:
         condition: service_healthy
-    develop:
-      watch:
-        - path: ../self-checkout-ml
-          action: sync+restart
-          target: /app
 
   ml-autolabel-worker:
-    <<: *dev-vlm-access
     restart: unless-stopped
     depends_on:
       redis:
         condition: service_healthy
-    develop:
-      watch:
-        - path: ../self-checkout-ml
-          action: sync+restart
-          target: /app
 
   redis:
-    image: redis:8.8.1-alpine@sha256:8096655e437712b07503796fb64d81359256cfcff0ab29d95a7da72863786efb
+    image: docker.io/redis:8.8.1-alpine@sha256:8096655e437712b07503796fb64d81359256cfcff0ab29d95a7da72863786efb
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
     healthcheck:
@@ -127,10 +86,10 @@ services:
       - training-queue-data:/data
 
   mailcatcher:
-    image: sj26/mailcatcher:v0.10.0@sha256:5d153a4daadf0c266f29c3856085741f06ca1e3768671f4267622d3e3ffe5564
+    image: docker.io/sj26/mailcatcher:v0.10.0@sha256:5d153a4daadf0c266f29c3856085741f06ca1e3768671f4267622d3e3ffe5564
     restart: unless-stopped
     ports:
-      - "1080:1080"
+      - "127.0.0.1:1080:1080"
 
 volumes:
   app-db-data:

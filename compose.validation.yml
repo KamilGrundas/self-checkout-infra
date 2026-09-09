@@ -1,9 +1,35 @@
 services:
+  # Test-only dependencies stay inside the Compose network. Deliberately omit
+  # host ports and volumes so every validation project starts with empty state.
+  db:
+    image: docker.io/postgres:18.4@sha256:3a82e1f56c8f0f5616a11103ac3d47e632c3938698946a7ad26da0df1334744a
+    restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      retries: 12
+      start_period: 5s
+      timeout: 5s
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?Variable not set}
+      POSTGRES_USER: ${POSTGRES_USER?Variable not set}
+      POSTGRES_DB: ${POSTGRES_DB?Variable not set}
+
+  prestart:
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?connect_timeout=${DB_CONNECT_TIMEOUT:-10}
+    depends_on:
+      db:
+        condition: service_healthy
+
   backend:
+    restart: "no"
     environment:
       FRONTEND_HOST: http://localhost:5173
       BACKEND_PUBLIC_URL: http://backend:8000
       BACKEND_CORS_ORIGINS: http://localhost:5173
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?connect_timeout=${DB_CONNECT_TIMEOUT:-10}
       SMTP_HOST: mailcatcher
       SMTP_PORT: "1025"
       SMTP_TLS: "false"
@@ -13,17 +39,24 @@ services:
         condition: service_started
 
   mailcatcher:
-    image: sj26/mailcatcher:v0.10.0@sha256:5d153a4daadf0c266f29c3856085741f06ca1e3768671f4267622d3e3ffe5564
+    image: docker.io/sj26/mailcatcher:v0.10.0@sha256:5d153a4daadf0c266f29c3856085741f06ca1e3768671f4267622d3e3ffe5564
     restart: "no"
+
+  redis:
+    image: docker.io/redis:8.8.1-alpine@sha256:8096655e437712b07503796fb64d81359256cfcff0ab29d95a7da72863786efb
+    restart: "no"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   backend-validation:
     build:
       context: ../self-checkout-backend
       dockerfile: Dockerfile
-    working_dir: /workspace
-    volumes:
-      - ../self-checkout-backend:/workspace
-      - backend-validation-venv:/workspace/.venv
+    working_dir: /app/backend
     env_file:
       - .env
     environment:
@@ -40,20 +73,13 @@ services:
     command:
       - bash
       - -lc
-      - uv sync --frozen --group dev && export PATH=/workspace/.venv/bin:$$PATH && bash scripts/lint.sh && bash scripts/tests-start.sh
+      - uv sync --frozen --group dev && export PATH=/app/backend/.venv/bin:$$PATH && bash scripts/lint.sh && bash scripts/tests-start.sh
 
   admin-validation:
     build:
       context: ../self-checkout-admin
       dockerfile: Dockerfile.validation
     working_dir: /workspace
-    volumes:
-      - ../self-checkout-admin:/workspace
-      - admin-validation-node-modules:/workspace/node_modules
-      - admin-validation-auth:/workspace/playwright/.auth
-      - admin-validation-results:/workspace/test-results
-      - admin-validation-report:/workspace/playwright-report
-      - admin-validation-blob-report:/workspace/blob-report
     env_file:
       - .env
     environment:
@@ -69,7 +95,25 @@ services:
     command:
       - bash
       - -lc
-      - npm ci && npx biome check --no-errors-on-unmatched --files-ignore-unknown=true src tests biome.json vite.config.ts playwright.config.ts openapi-ts.config.ts && npm run build && npm test
+      - npx biome check --no-errors-on-unmatched --files-ignore-unknown=true src tests biome.json vite.config.ts playwright.config.ts openapi-ts.config.ts && npm run build && npm test
+
+  admin:
+    restart: "no"
+    build:
+      args:
+        VITE_API_URL: http://backend:8000
+        VITE_ML_API_URL: http://ml:8000
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  ml:
+    restart: "no"
+    depends_on:
+      redis:
+        condition: service_healthy
 
   ml-validation:
     build:
@@ -140,11 +184,13 @@ services:
       - client-validation-target:/workspace/target
 
   integration-validation:
-    image: curlimages/curl:8.21.0@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
+    image: docker.io/curlimages/curl:8.21.0@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
     depends_on:
       backend:
         condition: service_healthy
       ml:
+        condition: service_healthy
+      admin:
         condition: service_healthy
     command:
       - sh
@@ -152,11 +198,5 @@ services:
       - curl -fsS http://backend:8000/api/v1/utils/health-check/ && curl -fsS http://ml:8000/api/v1/utils/health-check/ && curl -fsS http://admin/
 
 volumes:
-  backend-validation-venv:
-  admin-validation-node-modules:
-  admin-validation-auth:
-  admin-validation-results:
-  admin-validation-report:
-  admin-validation-blob-report:
   ml-validation-venv:
   client-validation-target:

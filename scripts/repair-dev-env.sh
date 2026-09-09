@@ -67,12 +67,12 @@ done
 
 set_value PROJECT_NAME 'Self Checkout Backend'
 set_value ENVIRONMENT local
-set_value FRONTEND_HOST 'https://dev.admin.teik.pl'
-set_value BACKEND_PUBLIC_URL 'https://dev.api.teik.pl'
-set_value VITE_API_URL 'https://dev.api.teik.pl'
-set_value VITE_ML_API_URL 'https://dev.ml.teik.pl'
-set_value BACKEND_CORS_ORIGINS 'https://dev.admin.teik.pl'
-set_value S3_PUBLIC_BASE_URL 'https://dev.s3-api.teik.pl'
+set_value FRONTEND_HOST 'http://localhost:5173'
+set_value BACKEND_PUBLIC_URL 'http://localhost:8000'
+set_value VITE_API_URL 'http://localhost:8000'
+set_value VITE_ML_API_URL 'http://localhost:8001'
+set_value BACKEND_CORS_ORIGINS 'http://localhost:5173'
+set_value S3_PUBLIC_BASE_URL 'http://localhost:8082'
 ensure_value S3_ENDPOINT_URL 'http://s3-provider:8080'
 ensure_value S3_REGION us-east-1
 ensure_value S3_BUCKET product-images
