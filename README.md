@@ -2,7 +2,7 @@
 
 This repository defines portable Compose topology and integration tooling for
 the self-checkout components. It is deliberately independent of a specific
-host, container runtime, proxy, OIDC implementation, VLM provider, and
+host, container runtime, proxy, VLM provider, and
 S3-compatible provider.
 
 ## Compose topology
